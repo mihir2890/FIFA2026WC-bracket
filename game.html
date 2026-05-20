@@ -232,16 +232,13 @@ select:focus{border-color:var(--lime)}
     <div class="lcard" style="max-width:500px">
       <div class="lcard-icon">🎉</div>
       <div class="lcard-title">League Created!</div>
-      <div class="lcard-sub">Share this code with your friends</div>
-      <div class="code-box" id="dispCode" onclick="copyCode()" title="Click to copy">WC0000</div>
-      <div id="dispBinId" style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:monospace;letter-spacing:.5px"></div>
-      <div style="font-size:12px;color:var(--muted);margin-bottom:16px">Click the code to copy the share link</div>
-      <div class="info-box">
-        <b>How to share:</b><br>
-        1. Click the code above to copy the full share link<br>
-        2. Send it to your friends — that's it!<br>
-        3. Everyone opens the link, enters their name, fills bracket<br>
-        4. You enter actual results → scores auto-update
+      <div class="lcard-sub">Send this link to everyone in your league</div>
+      <div id="shareUrlBox" onclick="copyShareLink()" style="background:rgba(200,241,53,.08);border:2px dashed rgba(200,241,53,.4);border-radius:12px;padding:14px 16px;margin:14px 0;cursor:pointer;word-break:break-all;font-size:12px;color:var(--lime);font-family:monospace;line-height:1.6">Generating link...</div>
+      <button class="btn btn-lime" onclick="copyShareLink()" style="margin-bottom:14px">📋 Copy Share Link</button>
+      <div class="info-box" style="border-left-color:var(--orange)">
+        <b style="color:var(--orange)">Share the LINK above — not just the code!</b><br>
+        The link has everything friends need to join.<br><br>
+        Friends open the link, enter their name, and they are in.
       </div>
       <button class="btn btn-lime" onclick="enterAdmin()">Fill My Bracket →</button>
     </div>
@@ -964,6 +961,10 @@ async function createLeague(){
     document.getElementById('dispCode').textContent=code;
     document.getElementById('loadCreate').style.display='none';
     showScreen('sShare');
+    // Set share URL box after screen is shown
+    const sUrl=window.location.origin+window.location.pathname+'?join='+code+'&bid='+id;
+    const sBox=document.getElementById('shareUrlBox');
+    if(sBox) sBox.textContent=sUrl;
   }catch(e){document.getElementById('loadCreate').style.display='none';showErr('errCreate','Error: '+e.message)}
 }
 async function joinLeague(){
@@ -987,17 +988,27 @@ async function joinLeague(){
     enterGame();
   }catch(e){showErr('errLanding','Error: '+e.message)}
 }
-function copyCode(){
-  navigator.clipboard.writeText(leagueCode+'\nBin ID: '+binId)
-    .then(()=>alert('Copied!\nCode: '+leagueCode+'\nBin ID: '+binId));
-}
+function copyCode(){ copyShareLink(); }
 function enterAdmin(){
   let bins=JSON.parse(localStorage.getItem('wc26_bins')||'{}');
   bins[leagueCode]=binId;localStorage.setItem('wc26_bins',JSON.stringify(bins));
-  // Show bin ID on share screen
-  const el=document.getElementById('dispBinId');
-  if(el) el.textContent='Bin ID: '+binId;
+  const sUrl=window.location.origin+window.location.pathname+'?join='+leagueCode+'&bid='+binId;
+  const sBox=document.getElementById('shareUrlBox');
+  if(sBox) sBox.textContent=sUrl;
   enterGame();
+}
+function copyShareLink(){
+  const shareUrl=window.location.origin+window.location.pathname+'?join='+leagueCode+'&bid='+binId;
+  const box=document.getElementById('shareUrlBox');
+  const btn=document.querySelector('#sShare .btn-lime');
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(shareUrl).then(function(){
+      if(box){box.textContent='Copied! Paste in your group chat.';}
+      if(btn){const o=btn.textContent;btn.textContent='Copied!';setTimeout(function(){btn.textContent=o;box.textContent=shareUrl;},3000);}
+    });
+  } else {
+    window.prompt('Copy this link and send it to friends:',shareUrl);
+  }
 }
 function enterGame(){
   document.getElementById('gName').textContent=playerName+(isAdmin?' (Admin)':'');
